@@ -19,7 +19,7 @@ matchRoutes.get("/", async (req, res) => {
       details: JSON.stringify(parsed.error),
     });
   }
-  const limit = Math.min(parsed.data.limit ?? 50, MAX_LIMIT);
+  const limit = Math.min(parsed.data.limit ?? 50, MAX_LIMIT); 
 
   try {
     const data = await db
@@ -55,6 +55,10 @@ matchRoutes.post("/", async (req, res) => {
         status: getMatchStatus(parse.data.startTime, parse.data.endTime),
       })
       .returning();
+
+      if(res.app.locals.broadcastMatchCreated){
+        res.app.locals.broadcastMatchCreated(event)
+      }
 
     res.status(201).json({ data: event });
   } catch (error) {

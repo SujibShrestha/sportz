@@ -1,29 +1,30 @@
-import express from 'express';
-import { eq } from 'drizzle-orm';
-import { db, pool } from './db/db.js';
-import { matchRoutes } from './routes/matches.route.js';
-
+import express from "express";
+import { matchRoutes } from "./routes/matches.route.js";
+import http from "http";
+import { attachWebSocketServer } from "./ws/server.js";
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const host = "0.0.0.0";
+
+// Create HTTP server
+const server = http.createServer(app);
 
 // Middleware
 app.use(express.json());
-app.use("/matches",matchRoutes)
+app.use("/matches", matchRoutes);
+
+// Attach WebSocket
+const { broadcastMatchCreated } = attachWebSocketServer(server);
+app.locals.broadcastMatchCreated = broadcastMatchCreated;
 
 // Routes
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the Sportz API' });
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to the Sportz API" });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('\nClosing database connection...');
-  await pool.end();
-  process.exit(0);
+// ✅ Start HTTP server (NOT app.listen)
+server.listen(PORT, host, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`WebSocket running on ws://localhost:${PORT}/ws`);
 });
